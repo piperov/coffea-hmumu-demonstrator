@@ -25,6 +25,8 @@ Once the 'hmumu_coffea_demonstrator' conda environment is prepared, the demonstr
 
 ```
 ssh hammer-xNNN #(your dedicated interactive node)
+ml anaconda/5.3.1-py37
+ml spark
 source activate hmumu_coffea_demonstrator
 git clone git@github.com:piperov/coffea-hmumu-demonstrator.git
 cd coffea-hmumu-demonstrator
