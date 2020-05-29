@@ -372,7 +372,7 @@ parameters["dnn_max"] = {
     '2018': 2.35
 }
 
-event_branches = ['run', 'luminosityBlock', 'genWeight']
+event_branches = ['run', 'luminosityBlock', 'genWeight', 'event']
 muon_branches = ['nMuon', 'Muon_pt', 'Muon_eta', 'Muon_phi', 'Muon_mass', 'Muon_charge', 'Muon_pfRelIso04_all']
 jet_branches = ['nJet', 'Jet_pt', 'Jet_eta', 'Jet_phi', 'Jet_mass', 'Jet_qgl', 'Jet_jetId', 'Jet_puId']
 vtx_branches = ['Pileup_nTrueInt', 'PV_npvsGood'] 
@@ -387,7 +387,7 @@ branches_2016 = ['HLT_IsoMu24', 'HLT_IsoTkMu24', 'L1PreFiringWeight_Nom', 'L1Pre
 branches_2017 = ['HLT_IsoMu27', 'L1PreFiringWeight_Nom', 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
 branches_2018 = ['HLT_IsoMu24']
 
-proc_columns = event_branches + muon_branches + jet_branches + vtx_branches + other_branches + event_flags 
+proc_columns = event_branches + muon_branches + jet_branches + vtx_branches + other_branches #+ event_flags 
 parameters["proc_columns"] = {
     "2016": proc_columns + branches_2016,
     "2017": proc_columns + branches_2017,

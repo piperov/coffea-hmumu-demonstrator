@@ -138,6 +138,7 @@ class SamplesInfo(object):
 
                 all_filenames = np.array(self.filesets[sample][sample]['files'])
                 all_filenames_chunked = np.array_split(all_filenames, nchunks)
+                all_filenames_chunked = [a.tolist() for a in all_filenames_chunked]
                 for i in range(nchunks):
                     if len(all_filenames_chunked[i])>0:
                         files_i = {'files': all_filenames_chunked[i], 'treename': 'Events'}
