@@ -42,4 +42,8 @@ In [2]: cluster.scale(64)
 In [3]: print(cluster)
 ```
 
-While waiting for enough workers to get started, proceed to the preparatory steps and the selecting and loading of the input datasets - everything up to the "Run the DASK executor" section.
+While waiting for enough workers to get started, open the `DASK_analyzer.ipynb` and  proceed to the preparatory steps and the selecting and loading of the input datasets - everything up to the "Run the DASK executor" section.  
+Then, when `print(cluster)` shows enough DASK workers running, proceed with running the DASK executor.
+Finally, plot the results.
+
+For the SPARK executor, start the `SPARK_analyzer.ipynb` instead.
