@@ -6,19 +6,26 @@ Before runnning this demonstrator on Hammer, one needs to prepare a conda enviro
 ssh hammer
 
 ml anaconda/5.3.1-py37
-conda create --name hmumu_coffea python=3.7
-source activate hmumu_coffea
+conda create --name hmumu_coffea_demonstrator python=3.7
+source activate hmumu_coffea_demonstrator
 pip install --user --upgrade coffea
 conda install nb_conda
-conda install -c conda-forge pytest xrootd keras dask dask-jobqueue jupyterlab
+conda install -c conda-forge pytest xrootd keras dask dask-jobqueue jupyterlab nodejs
+pip install dask_labextension
+jupyter labextension install dask-labextension
+pip install jupyterlab-sparkmonitor
+jupyter labextension install jupyterlab_sparkmonitor
+jupyter serverextension enable --py sparkmonitor
+ipython profile create --ipython-dir=.ipython
+echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >>  .ipython/profile_default/ipython_config.py
 source deactivate
 ```
 
-Once the 'hmumu_coffea' conda environment is prepared, the demonstrator can be run e.g. in a ThinLinc (aka "Remote Desktop") session on the Hammer Frontend:  
+Once the 'hmumu_coffea_demonstrator' conda environment is prepared, the demonstrator can be run e.g. in a ThinLinc (aka "Remote Desktop") session on the Hammer Frontend:  
 
 ```
 ssh hammer-xNNN #(your dedicated interactive node)
-source activate hmumu_coffea
+source activate hmumu_coffea_demonstrator
 git clone git@github.com:piperov/coffea-hmumu-demonstrator.git
 cd coffea-hmumu-demonstrator
 . setup_proxy.sh
