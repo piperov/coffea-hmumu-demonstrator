@@ -374,10 +374,11 @@ parameters["dnn_max"] = {
 
 event_branches = ['run', 'luminosityBlock', 'genWeight', 'event']
 muon_branches = ['nMuon', 'Muon_pt', 'Muon_ptErr', 'Muon_eta', 'Muon_phi', 'Muon_mass', 'Muon_charge', 'Muon_pfRelIso04_all', 'Muon_mediumId','Muon_fsrPhotonIdx', 'Muon_jetIdx']
+gen_branches = ['nGenPart', 'GenPart_pt', 'GenPart_eta', 'GenPart_phi', 'GenPart_pdgId']
 fsr_branches = ['nFsrPhoton', 'FsrPhoton_pt', 'FsrPhoton_eta', 'FsrPhoton_phi', 'FsrPhoton_relIso03', 'FsrPhoton_dROverEt2']
 trig_branches = ['nTrigObj', 'TrigObj_pt', 'TrigObj_eta', 'TrigObj_phi', 'TrigObj_mass', 'TrigObj_id']
 jet_branches = ['nJet', 'Jet_pt', 'Jet_eta', 'Jet_phi', 'Jet_mass', 'Jet_qgl', 'Jet_jetId', 'Jet_puId', 'Jet_electronIdx1', 'Jet_electronIdx2', 'Jet_muonIdx1', 'Jet_muonIdx2', 'Jet_rawFactor', 'fixedGridRhoFastjetAll', 'Jet_btagDeepB', 'Jet_area']
-genjet_branches = ['nGenJet', 'GenJet_pt', 'GenJet_eta', 'GenJet_phi']
+genjet_branches = ['nGenJet', 'GenJet_pt', 'GenJet_eta', 'GenJet_phi', 'GenJet_mass']
 sajet_branches = ['nSoftActivityJet', 'SoftActivityJet_pt', 'SoftActivityJet_eta', 'SoftActivityJet_phi', 'SoftActivityJetNjets2', 'SoftActivityJetHT2', 'SoftActivityJetNjets5', 'SoftActivityJetHT5']
 vtx_branches = ['Pileup_nTrueInt', 'PV_npvsGood'] 
 other_branches = ['MET_pt']
@@ -389,6 +390,7 @@ event_flags = ['Flag_BadPFMuonFilter','Flag_EcalDeadCellTriggerPrimitiveFilter',
               ]
 
 puid17 = ['Jet_puId17']
+mc_branches = gen_branches + ['Muon_genPartIdx', 'Muon_nTrackerLayers', 'Jet_genJetIdx', 'Jet_hadronFlavour', 'Jet_partonFlavour']
 
 branches_2016 = ['HLT_IsoMu24', 'HLT_IsoTkMu24', 'L1PreFiringWeight_Nom', 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
 branches_2017 = ['HLT_IsoMu27', 'L1PreFiringWeight_Nom', 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn']
@@ -399,4 +401,10 @@ parameters["proc_columns"] = {
     "2016": proc_columns + branches_2016,
     "2017": proc_columns + branches_2017 + puid17,
     "2018": proc_columns + branches_2018,
+}
+
+parameters["proc_columns_mc"] = {
+    "2016": proc_columns + branches_2016 + mc_branches,
+    "2017": proc_columns + branches_2017 + puid17 + mc_branches,
+    "2018": proc_columns + branches_2018 + mc_branches,
 }

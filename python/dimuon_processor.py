@@ -70,9 +70,14 @@ class DimuonProcessor(processor.ProcessorABC):
         self.parameters = {k:v[self.year] for k,v in parameters.items()}
 
         self.timer = Timer('global') if do_timer else None
- 
-        self._columns = self.parameters["proc_columns"]
-                        
+
+        only_data = np.array(['data' in s for s in self.samp_info.samples]).all()
+
+        if only_data:
+            self._columns = self.parameters["proc_columns"]
+        else:
+            self._columns = self.parameters["proc_columns_mc"]
+            
         self.regions = self.samp_info.regions
         self.channels = self.samp_info.channels
 
@@ -248,19 +253,14 @@ class DimuonProcessor(processor.ProcessorABC):
             from coffea.nanoaod import NanoEvents
             dataset = df['dataset']
             skip = ['dataset','_lazy_crossref']
-            for k in df.keys():
-                if k in skip: continue
-                print(k)
-                print(len(df[k].flatten()))
             arrays = {k:df[k].flatten() for k in df.keys() if k not in skip}
-            print(arrays)
             df = NanoEvents.from_arrays(arrays)
         else:
             dataset = df.metadata['dataset']
 
         output = self.accumulator.identity()
         is_mc = 'data' not in dataset
-        
+
         if self.debug:
             print("Input: ", df.shape[0])
                 
