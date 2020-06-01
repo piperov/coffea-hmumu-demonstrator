@@ -48,7 +48,7 @@ def get_jec_unc(name, jet_pt, jet_eta, jecunc):
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, samp_info, evaluate_dnn=False,\
                  do_timer=False, save_unbin=True, do_lheweights=False, do_jec=True,\
-                 do_jer=True, do_jecunc=False, do_pdf=True, debug=False): 
+                 do_jer=True, do_jecunc=False, do_pdf=True, debug=False, use_spark=False): 
         from config.parameters import parameters
         from config.variables import variables
         if not samp_info:
@@ -58,6 +58,7 @@ class DimuonProcessor(processor.ProcessorABC):
         self.samp_info = samp_info
         self.year = self.samp_info.year
         self.debug = debug
+        self.use_spark = use_spark
         self.mass_window = [76, 150]
         self.save_unbin = save_unbin
         self.do_jec = do_jec
@@ -242,9 +243,22 @@ class DimuonProcessor(processor.ProcessorABC):
                 self.timer = Timer('global')
         if self.timer:
             self.timer.update() 
-            
+
+        if self.use_spark:
+            from coffea.nanoaod import NanoEvents
+            dataset = df['dataset']
+            skip = ['dataset','_lazy_crossref']
+            for k in df.keys():
+                if k in skip: continue
+                print(k)
+                print(len(df[k].flatten()))
+            arrays = {k:df[k].flatten() for k in df.keys() if k not in skip}
+            print(arrays)
+            df = NanoEvents.from_arrays(arrays)
+        else:
+            dataset = df.metadata['dataset']
+
         output = self.accumulator.identity()
-        dataset = df.metadata['dataset']
         is_mc = 'data' not in dataset
         
         if self.debug:
@@ -368,7 +382,7 @@ class DimuonProcessor(processor.ProcessorABC):
             
         updated_attrs = {'pt': muons_pt, 'pt_raw': muons_pt_raw, 'pt_fsr': muons_pt_fsr, 'eta':muons_eta,\
                          'eta_raw':muons_eta_raw, 'phi':muons_phi, 'mass':muons_mass, 'pfRelIso04_all':muons_iso}
-        
+
         muonarrays = {key:mu[key].flatten() for key in mu.columns}
         muonarrays.update(updated_attrs)
         muons = JaggedCandidateArray.candidatesfromcounts(mu.counts, **muonarrays)
@@ -379,20 +393,20 @@ class DimuonProcessor(processor.ProcessorABC):
         # Select events with 2 OS muons, no electrons, passing quality cuts and at least one good PV
         #---------------------------------------------------------------# 
         
-        pass_event_flags = np.ones(numevents, dtype=bool)
-        for flag in self.parameters["event_flags"]:
-            pass_event_flags = pass_event_flags & df.Flag[flag]
-        if self.debug:
-            print("Pass event flags:", sum(pass_event_flags))
+#        pass_event_flags = np.ones(numevents, dtype=bool)
+#        for flag in self.parameters["event_flags"]:
+#            pass_event_flags = pass_event_flags & df.Flag[flag]
+#        if self.debug:
+#            print("Pass event flags:", sum(pass_event_flags))
 
         pass_muon_flags = np.ones(df.shape[0], dtype=bool)
         for flag in self.parameters["muon_flags"]:
             pass_muon_flags = pass_muon_flags & muons[flag]
-            
+
         muons = muons[(muons.pt_fsr > self.parameters["muon_pt_cut"]) &\
                       (abs(muons.eta_raw) < self.parameters["muon_eta_cut"]) &\
                         (muons.pfRelIso04_all < self.parameters["muon_iso_cut"]) &\
-                        muons[self.parameters["muon_id"]] 
+                        (muons[self.parameters["muon_id"]]>0)
                      & pass_muon_flags]    
         
         two_os_muons = ((muons.counts == 2) & (muons['charge'].prod() == -1))
@@ -404,8 +418,9 @@ class DimuonProcessor(processor.ProcessorABC):
         electron_veto = (electrons.counts>-1)
         good_pv = (df.PV.npvsGood > 0)
         
-        event_filter = (pass_event_flags & two_os_muons & electron_veto & good_pv).flatten()
-        
+#        event_filter = (pass_event_flags & two_os_muons & electron_veto & good_pv).flatten()
+        event_filter = (two_os_muons & electron_veto & good_pv).flatten()
+
         if self.debug:
             print("Has 2 OS muons passing selections, good PV and no electrons:", sum(event_filter))
 
@@ -440,24 +455,24 @@ class DimuonProcessor(processor.ProcessorABC):
         pass_leading_pt[muons.counts>0] = (mu1.pt_fsr>self.parameters["muon_leading_pt"]).flatten()
         
         # All L3 trigger muons
-        trigmuarrays = {key:df.TrigObj[key].flatten() for key in df.TrigObj.columns}
-        trigmuarrays.update({'mass':0})
-        trig_muons = JaggedCandidateArray.candidatesfromcounts(df.TrigObj.counts, **trigmuarrays)
-        trig_muons = trig_muons[(trig_muons.id == 13) | (trig_muons.id == -13)]
-        trigmuarrays.clear()
+        #trigmuarrays = {key:df.TrigObj[key].flatten() for key in df.TrigObj.columns}
+        #trigmuarrays.update({'mass':0})
+        #trig_muons = JaggedCandidateArray.candidatesfromcounts(df.TrigObj.counts, **trigmuarrays)
+        #trig_muons = trig_muons[(trig_muons.id == 13) | (trig_muons.id == -13)]
+        #trigmuarrays.clear()
         
         # Muons that pass tight id and iso as well as leading muon pT cut     
-        mu_for_trigmatch = muons[(muons.pt_fsr > self.parameters["muon_leading_pt"]) &\
-                                   (muons.pfRelIso04_all < self.parameters["muon_trigmatch_iso"]) &\
-                                   muons[self.parameters["muon_trigmatch_id"]]]
+        #mu_for_trigmatch = muons[(muons.pt_fsr > self.parameters["muon_leading_pt"]) &\
+        #                           (muons.pfRelIso04_all < self.parameters["muon_trigmatch_iso"]) &\
+        #                           muons[self.parameters["muon_trigmatch_id"]]]
         
         # For every such muon check if there is a L3 object within dR<0.1
-        muTrig = mu_for_trigmatch.cross(trig_muons, nested = True)
-        _,_,dr = delta_r(muTrig.i0.eta_raw, muTrig.i1.eta, muTrig.i0.phi, muTrig.i1.phi)
-        has_matched_trigmuon = (dr < self.parameters["muon_trigmatch_dr"]).any()
+        #muTrig = mu_for_trigmatch.cross(trig_muons, nested = True)
+        #_,_,dr = delta_r(muTrig.i0.eta_raw, muTrig.i1.eta, muTrig.i0.phi, muTrig.i1.phi)
+        #has_matched_trigmuon = (dr < self.parameters["muon_trigmatch_dr"]).any()
         
         # Events where there is a trigger object matched to a tight-ID tight-Iso muon passing leading pT cut
-        event_passing_trig_match = (mu_for_trigmatch[has_matched_trigmuon].counts>0).flatten()
+        #event_passing_trig_match = (mu_for_trigmatch[has_matched_trigmuon].counts>0).flatten()
         
         mask = mask & pass_leading_pt #& event_passing_trig_match
         
@@ -542,6 +557,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #---------------------------------------------------------------#        
         # Prepare jets
         #---------------------------------------------------------------# 
+
         jetarrays = {key:df.Jet[key].flatten() for key in df.Jet.columns} 
         jetarrays.update(**{'ptRaw':(df.Jet.pt * (1-df.Jet.rawFactor)).flatten(),\
                             'massRaw':(df.Jet.mass * (1-df.Jet.rawFactor)).flatten(),\
@@ -568,6 +584,7 @@ class DimuonProcessor(processor.ProcessorABC):
         #---------------------------------------------------------------#
     
         jet_variation_names = ['nominal']
+        self.do_jec = False
         if self.do_jec: 
             cols = {'pt':'__fast_pt',
                     'eta':'__fast_eta',
