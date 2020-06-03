@@ -37,7 +37,7 @@ def roccor_evaluator(rochester, is_mc, muons):
     if is_mc:
         mc_rand = np.random.rand(*muons.pt.flatten().shape)
         mc_rand = awkward.JaggedArray.fromoffsets(muons.pt.offsets, mc_rand)
-        hasgen = ~np.isnan(muons.matched_gen.pt.fillna(np.nan))
+        hasgen = ~np.isnan(muons.matched_gen.pt)
         mc_rand = awkward.JaggedArray.fromoffsets(hasgen.offsets, mc_rand)._content
 
         mc_kspread = rochester.kSpreadMC(muons.charge[hasgen], muons.pt[hasgen], muons.eta[hasgen], muons.phi[hasgen],
